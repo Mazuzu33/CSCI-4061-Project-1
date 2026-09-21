@@ -18,16 +18,40 @@
 
 #define MAX_ARGS 10
 
-int tokenize(char *s, strvec_t *tokens) {
+int tokenize(char *s, strvec_t *tokens)
+{
     // TODO Task 0: Tokenize string s
     // Assume each token is separated by a single space (" ")
     // Use the strtok() function to accomplish this
     // Add each token to the 'tokens' parameter (a string vector)
     // Return 0 on success, -1 on error
-    return 0;
+
+    // Instantiate tokens
+    if (strvec_init(tokens) == -1)
+    {
+        return -1;
+    }
+    else
+    {
+        // Continuosly parse s for a token and add it to tokens
+        char *token = strtok(s, " ");
+        while (token != NULL)
+        {
+            if (strvec_add(tokens, token) == -1)
+            {
+                return -1;
+            }
+            else
+            {
+                token = strtok(NULL, " ");
+            }
+        }
+        return 0;
+    }
 }
 
-int run_command(strvec_t *tokens) {
+int run_command(strvec_t *tokens)
+{
     // TODO Task 2: Execute the specified program (token 0) with the
     // specified command-line arguments
     // THIS FUNCTION SHOULD BE CALLED FROM A CHILD OF THE MAIN SHELL PROCESS
@@ -54,7 +78,8 @@ int run_command(strvec_t *tokens) {
     return 0;
 }
 
-int resume_job(strvec_t *tokens, job_list_t *jobs, int is_foreground) {
+int resume_job(strvec_t *tokens, job_list_t *jobs, int is_foreground)
+{
     // TODO Task 5: Implement the ability to resume stopped jobs in the foreground
     // 1. Look up the relevant job information (in a job_t) from the jobs list
     //    using the index supplied by the user (in tokens index 1)
@@ -76,7 +101,8 @@ int resume_job(strvec_t *tokens, job_list_t *jobs, int is_foreground) {
     return 0;
 }
 
-int await_background_job(strvec_t *tokens, job_list_t *jobs) {
+int await_background_job(strvec_t *tokens, job_list_t *jobs)
+{
     // TODO Task 6: Wait for a specific job to stop or terminate
     // 1. Look up the relevant job information (in a job_t) from the jobs list
     //    using the index supplied by the user (in tokens index 1)
@@ -87,7 +113,8 @@ int await_background_job(strvec_t *tokens, job_list_t *jobs) {
     return 0;
 }
 
-int await_all_background_jobs(job_list_t *jobs) {
+int await_all_background_jobs(job_list_t *jobs)
+{
     // TODO Task 6: Wait for all background jobs to stop or terminate
     // 1. Iterate through the jobs list, ignoring any stopped jobs
     // 2. For a background job, call waitpid() with WUNTRACED.
