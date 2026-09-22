@@ -87,6 +87,43 @@ int main(int argc, char **argv)
             // If the user supplied an argument (token at index 1), change to that directory
             // Otherwise, change to the home directory by default
             // This is available in the HOME environment variable (use getenv())
+
+            // If only cd is entered, switch directory to the user's home directory
+            if (tokens.length == 1)
+            {
+                char *home = getenv("HOME");
+                if (home == NULL)
+                {
+                    perror("chdir");
+                }
+                else
+                {
+                    if (chdir(home) == -1)
+                    {
+                        perror("chdir");
+                    }
+                }
+            }
+            // If two tokens are supplied, switch directory to the specified directory from the second token
+            else if (tokens.length == 2)
+            {
+                const char *second_token = strvec_get(&tokens, 1);
+                if (second_token == NULL)
+                {
+                    perror("chdir");
+                }
+                else
+                {
+                    if (chdir(second_token) == -1)
+                    {
+                        perror("chdir");
+                    }
+                }
+            }
+            else
+            {
+                perror("chdir");
+            }
         }
 
         else if (strcmp(first_token, "exit") == 0)
