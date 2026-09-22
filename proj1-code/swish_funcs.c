@@ -26,28 +26,20 @@ int tokenize(char *s, strvec_t *tokens)
     // Add each token to the 'tokens' parameter (a string vector)
     // Return 0 on success, -1 on error
 
-    // Instantiate tokens
-    if (strvec_init(tokens) == -1)
+    // Continuosly parse s for a token and add it to tokens
+    char *token = strtok(s, " ");
+    while (token != NULL)
     {
-        return -1;
-    }
-    else
-    {
-        // Continuosly parse s for a token and add it to tokens
-        char *token = strtok(s, " ");
-        while (token != NULL)
+        if (strvec_add(tokens, token) == -1)
         {
-            if (strvec_add(tokens, token) == -1)
-            {
-                return -1;
-            }
-            else
-            {
-                token = strtok(NULL, " ");
-            }
+            return -1;
         }
-        return 0;
+        else
+        {
+            token = strtok(NULL, " ");
+        }
     }
+    return 0;
 }
 
 int run_command(strvec_t *tokens)
