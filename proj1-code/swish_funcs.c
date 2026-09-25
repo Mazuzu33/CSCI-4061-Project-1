@@ -51,6 +51,25 @@ int run_command(strvec_t *tokens)
     // Another Hint: You have a guarantee of the longest possible needed array, so you
     // won't have to use malloc.
 
+    // Instantiate a string array to be passed into execvp() using tokens
+    char *args[MAX_ARGS];
+    char *firstToken = strvec_get(tokens, 0);
+    args[0] = firstToken;
+    int i = 1;
+    char *curToken;
+    while ((curToken = strvec_get(tokens, i)) != NULL)
+    {
+        args[i] = curToken;
+        i += 1;
+    }
+    // Set element after last token to NULL
+    args[i] = NULL;
+    // Return -1 if exec fails
+    if (execvp(firstToken, args) == -1)
+    {
+        perror("exec");
+        return -1;
+    }
     // TODO Task 3: Extend this function to perform output redirection before exec()'ing
     // Check for '<' (redirect input), '>' (redirect output), '>>' (redirect and append output)
     // entries inside of 'tokens' (the strvec_find() function will do this for you)
