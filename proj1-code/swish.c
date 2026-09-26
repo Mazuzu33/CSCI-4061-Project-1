@@ -94,14 +94,11 @@ int main(int argc, char **argv)
                 char *home = getenv("HOME");
                 if (home == NULL)
                 {
-                    perror("chdir");
+                    printf("HOME environment variable not set\n");
                 }
-                else
+                else if (chdir(home) == -1)
                 {
-                    if (chdir(home) == -1)
-                    {
-                        perror("chdir");
-                    }
+                    perror("chdir");
                 }
             }
             // If two tokens are supplied, switch directory to the specified directory from the second token
@@ -110,19 +107,16 @@ int main(int argc, char **argv)
                 const char *second_token = strvec_get(&tokens, 1);
                 if (second_token == NULL)
                 {
-                    perror("chdir");
+                    printf("Could not access second token\n");
                 }
-                else
+                else if (chdir(second_token) == -1)
                 {
-                    if (chdir(second_token) == -1)
-                    {
-                        perror("chdir");
-                    }
+                    perror("chdir");
                 }
             }
             else
             {
-                perror("chdir");
+                printf("Too many arguments supplied to cd\n");
             }
         }
 
@@ -200,21 +194,23 @@ int main(int argc, char **argv)
             //   2. Call run_command() in the child process
             //   2. In the parent, use waitpid() to wait for the program to exit
 
-            // Call fork
+            // Fork a child process
             pid_t pid = fork();
             if (pid == -1)
             {
-                printf("Failed to fork\n");
+                perror("fork");
             }
-            // Attempt to all run_command, return 1 to terminate child process on failure
+            // Attempt to call run_command in the child, return 1 to terminate child process on failure
             else if (pid == 0)
             {
                 if (run_command(&tokens) == -1)
                 {
+                    strvec_clear(&tokens);
+                    job_list_free(&jobs);
                     return 1;
                 }
             }
-            // Inside the parent wait for child
+            // Wait for the child inside the parent
             else
             {
                 waitpid(pid, NULL, 0);
