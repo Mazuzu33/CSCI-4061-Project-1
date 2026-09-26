@@ -51,25 +51,6 @@ int run_command(strvec_t *tokens)
     // Another Hint: You have a guarantee of the longest possible needed array, so you
     // won't have to use malloc.
 
-    // Instantiate a string array to be passed into execvp() using tokens
-    char *args[MAX_ARGS];
-    char *firstToken = strvec_get(tokens, 0);
-    args[0] = firstToken;
-    int i = 1;
-    char *curToken;
-    while ((curToken = strvec_get(tokens, i)) != NULL)
-    {
-        args[i] = curToken;
-        i += 1;
-    }
-    // Set element after last token to NULL
-    args[i] = NULL;
-    // Return -1 if exec fails
-    if (execvp(firstToken, args) == -1)
-    {
-        perror("exec");
-        return -1;
-    }
     // TODO Task 3: Extend this function to perform output redirection before exec()'ing
     // Check for '<' (redirect input), '>' (redirect output), '>>' (redirect and append output)
     // entries inside of 'tokens' (the strvec_find() function will do this for you)
@@ -86,6 +67,113 @@ int run_command(strvec_t *tokens)
     // Call getpid() to get its process ID then call setpgid() and use this process
     // ID as the value for the new process group ID
 
+    char *args[MAX_ARGS];
+    // Save the first token to be used in the exec call later on
+    char *firstToken = strvec_get(tokens, 0);
+    if (firstToken == NULL)
+    {
+        return -1;
+    }
+    args[0] = firstToken;
+    // Handle redirection operators
+    int opIndex;
+    char *file;
+    int fd;
+    // Check for > or >>
+    if ((opIndex = strvec_find(tokens, ">")) != -1)
+    {
+        // Get the next token which should correspond to the filename
+        file = strvec_get(tokens, opIndex + 1);
+        if (file == NULL)
+        {
+            return -1;
+        }
+        // Open the file
+        fd = open(file, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR);
+        if (fd == -1)
+        {
+            perror("Failed to open output file");
+            return -1;
+        }
+        // Redirect standard output
+        if (dup2(fd, STDOUT_FILENO) == -1)
+        {
+            perror("dup2");
+            close(fd);
+            return -1;
+        }
+        close(fd);
+    }
+    else if ((opIndex = strvec_find(tokens, ">>")) != -1)
+    {
+        // Get the next token which should correspond to the filename
+        file = strvec_get(tokens, opIndex + 1);
+        if (file == NULL)
+        {
+            return -1;
+        }
+        // Open the file
+        fd = open(file, O_CREAT | O_APPEND | O_WRONLY, S_IRUSR | S_IWUSR);
+        if (fd == -1)
+        {
+            perror("Failed to open output file");
+            return -1;
+        }
+        // Redirect standard output
+        if (dup2(fd, STDOUT_FILENO) == -1)
+        {
+            perror("dup2");
+            close(fd);
+            return -1;
+        }
+        close(fd);
+    }
+    // Check for <
+    if ((opIndex = strvec_find(tokens, "<")) != -1)
+    {
+        // Get the next token which should correspond to the filename
+        file = strvec_get(tokens, opIndex + 1);
+        if (file == NULL)
+        {
+            return -1;
+        }
+        // Open the file
+        fd = open(file, O_RDONLY);
+        if (fd == -1)
+        {
+            perror("Failed to open input file");
+            return -1;
+        }
+        // Redirect standard input
+        if (dup2(fd, STDIN_FILENO) == -1)
+        {
+            perror("dup2");
+            close(fd);
+            return -1;
+        }
+        close(fd);
+    }
+    // Add arguments in tokens to args
+    int i = 1;
+    char *curToken;
+    while ((curToken = strvec_get(tokens, i)) != NULL)
+    {
+        // Stop building argument list if a redirection operator is reached
+        if (strcmp(curToken, "<") == 0 || strcmp(curToken, ">>") == 0 || strcmp(curToken, ">") == 0)
+        {
+            break;
+        }
+        args[i] = curToken;
+        i += 1;
+    }
+    // Set element after last token to NULL
+    args[i] = NULL;
+    // Attempt to launch the program with the specified arguments
+    if (execvp(firstToken, args) == -1)
+    {
+        perror("exec");
+        return -1;
+    }
     return 0;
 }
 
