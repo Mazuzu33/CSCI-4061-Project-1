@@ -67,6 +67,31 @@ int run_command(strvec_t *tokens)
     // Call getpid() to get its process ID then call setpgid() and use this process
     // ID as the value for the new process group ID
 
+    // Create sigaction struct
+    struct sigaction sac;
+    // Default signal handling
+    sac.sa_handler = SIG_DFL;
+    // Block all other signals while handler is running
+    if (sigfillset(&sac.sa_mask) == -1)
+    {
+        perror("sigfillset");
+        return 1;
+    }
+    // No special options
+    sac.sa_flags = 0;
+    // If SIGTTIN or SIGTTOU is recieved, then attempt to run defaults handler
+    if (sigaction(SIGTTIN, &sac, NULL) == -1 || sigaction(SIGTTOU, &sac, NULL) == -1)
+    {
+        perror("sigaction");
+        return 1;
+    }
+    // Get process ID and set new process group ID
+    pid_t pid = getpid();
+    if (setpgid(pid, pid) == -1)
+    {
+        perror("setpgid");
+        return 1;
+    }
     char *args[MAX_ARGS];
     // Save the first token to be used in the exec call later on
     char *firstToken = strvec_get(tokens, 0);
