@@ -201,6 +201,7 @@ int main(int argc, char **argv)
 
             // Fork a child process
             pid_t pid = fork();
+            int status;
             if (pid == -1)
             {
                 perror("fork");
@@ -223,11 +224,20 @@ int main(int argc, char **argv)
                 {
                     perror("tcsetpgrp");
                 }
-                waitpid(pid, NULL, 0);
+                waitpid(pid, &status, WUNTRACED);
+
                 // Set the parent to be the foreground process
                 if (tcsetpgrp(STDIN_FILENO, getpid()) == -1)
                 {
                     perror("tcsetpgrp");
+                }
+
+                if (WIFSTOPPED(status))
+                {
+                    if (job_list_add(&jobs, getpid(), first_token, status) == -1)
+                    {
+                        perror("could not add to job list");
+                    }
                 }
             }
             // TODO Task 5: Handle the issue of foreground/background terminal process groups.

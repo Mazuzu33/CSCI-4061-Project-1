@@ -215,6 +215,49 @@ int resume_job(strvec_t *tokens, job_list_t *jobs, int is_foreground)
     // 6. Call tcsetpgrp(STDIN_FILENO, <shell_pid>). shell_pid is the *current*
     //    process's pid, since we call this function from the main shell process
 
+    int idx;
+    if ((idx = atoi(strvec_get(tokens, 1))) == 0)
+    {
+        return -1;
+    }
+    int status;
+    int pid;
+    job_t *cur_job;
+    if ((cur_job = job_list_get(jobs, idx)) == NULL)
+    {
+        return -1;
+    }
+
+    if ((pid = cur_job->pid) == -1)
+    {
+        return -1;
+    }
+
+    if (tcsetpgrp(STDIN_FILENO, pid) == -1)
+    {
+        perror("failed to get jobs pid");
+        return -1;
+    }
+
+    if (kill(pid, SIGCONT) == -1)
+    {
+        perror("failed to continue");
+        return -1;
+    }
+
+    waitpid(pid, &status, WUNTRACED);
+
+    if (WIFEXITED(status))
+    {
+        job_list_remove(jobs, idx);
+    }
+
+    if (tcsetpgrp(STDIN_FILENO, getpid()) == -1)
+    {
+        perror("failed to get shell process pid");
+        return -1;
+    }
+
     // TODO Task 6: Implement the ability to resume stopped jobs in the background.
     // This really just means omitting some of the steps used to resume a job in the foreground:
     // 1. DO NOT call tcsetpgrp() to manipulate foreground/background terminal process group
