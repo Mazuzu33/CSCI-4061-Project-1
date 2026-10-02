@@ -221,6 +221,8 @@ int main(int argc, char **argv)
 
             // Check if last token is & and remove it if so
             char *last_token;
+            // 0 for false, 1 for true
+            int background = 0;
             if ((last_token = strvec_get(&tokens, tokens.length - 1)) == NULL)
             {
                 printf("Could not get last token\n");
@@ -228,7 +230,8 @@ int main(int argc, char **argv)
             // Keep tokens except for the last one
             if (strcmp(last_token, "&") == 0)
             {
-                strvec_take(&tokens, tokens.length);
+                background = 1;
+                strvec_take(&tokens, tokens.length - 1);
             }
             // Fork a child process
             pid_t pid = fork();
@@ -251,7 +254,7 @@ int main(int argc, char **argv)
             else
             {
                 // If this is a background job
-                if (strcmp(last_token, "&") == 0)
+                if (background == 1)
                 {
                     if (job_list_add(&jobs, pid, first_token, BACKGROUND) == -1)
                     {
