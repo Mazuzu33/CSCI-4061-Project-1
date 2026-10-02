@@ -246,7 +246,7 @@ int main(int argc, char **argv)
                 // Check if child was suspended, and if so, add it to the job list
                 if (WIFSTOPPED(status))
                 {
-                    if (job_list_add(&jobs, getpid(), first_token, status) == -1)
+                    if (job_list_add(&jobs, pid, first_token, status) == -1)
                     {
                         perror("Could not add to job list\n");
                     }

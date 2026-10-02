@@ -218,7 +218,7 @@ int resume_job(strvec_t *tokens, job_list_t *jobs, int is_foreground)
     char *token;
     int idx;
     // Grab the index of the job to be resued and convert it to an integer
-    if ((token = strvec_get(tokens, 1)) == 0)
+    if ((token = strvec_get(tokens, 1)) == NULL)
     {
         return -1;
     }
@@ -227,7 +227,7 @@ int resume_job(strvec_t *tokens, job_list_t *jobs, int is_foreground)
         return -1;
     }
     int status;
-    int pid;
+    pid_t pid;
     job_t *cur_job;
     // Get the specified job out of jobs
     if ((cur_job = job_list_get(jobs, idx)) == NULL)
@@ -252,7 +252,7 @@ int resume_job(strvec_t *tokens, job_list_t *jobs, int is_foreground)
     waitpid(pid, &status, WUNTRACED);
 
     // If job was terminated, remove it from the job list
-    if (WIFEXITED(status))
+    if (WIFEXITED(status) || WIFSIGNALED(status))
     {
         if (job_list_remove(jobs, idx) == -1)
         {
