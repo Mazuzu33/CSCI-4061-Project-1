@@ -210,6 +210,26 @@ int main(int argc, char **argv)
             // You can detect if this has occurred using WIFSTOPPED on the status
             // variable set by waitpid()
 
+            // TODO Task 6: If the last token input by the user is "&", start the current
+            // command in the background.
+            // 1. Determine if the last token is "&". If present, use strvec_take() to remove
+            //    the "&" from the token list.
+            // 2. Modify the code for the parent (shell) process: Don't use tcsetpgrp() or
+            //    use waitpid() to interact with the newly spawned child process.
+            // 3. Add a new entry to the jobs list with the child's pid, program name,
+            //    and status BACKGROUND.
+
+            // Check if last token is & and remove it if so
+            char *last_token;
+            if ((last_token = strvec_get(&tokens, tokens.length - 1)) == NULL)
+            {
+                printf("Could not get last token\n");
+            }
+            // Keep tokens except for the last one
+            if (strcmp(last_token, "&") == 0)
+            {
+                strvec_take(&tokens, tokens.length);
+            }
             // Fork a child process
             pid_t pid = fork();
             int status;
@@ -230,43 +250,43 @@ int main(int argc, char **argv)
             // Wait for the child inside the parent
             else
             {
-                // Set the child to be the foreground process
-                if (tcsetpgrp(STDIN_FILENO, pid) == -1)
+                // If this is a background job
+                if (strcmp(last_token, "&") == 0)
                 {
-                    perror("tcsetpgrp");
-                }
-                waitpid(pid, &status, WUNTRACED);
-
-                // Set the parent to be the foreground process
-                if (tcsetpgrp(STDIN_FILENO, getpid()) == -1)
-                {
-                    perror("tcsetpgrp");
-                }
-
-                // Check if child was suspended, and if so, add it to the job list
-                if (WIFSTOPPED(status))
-                {
-                    if (job_list_add(&jobs, pid, first_token, status) == -1)
+                    if (job_list_add(&jobs, pid, first_token, BACKGROUND) == -1)
                     {
                         perror("Could not add to job list\n");
                     }
                 }
+                else
+                {
+                    // Set the child to be the foreground process
+                    if (tcsetpgrp(STDIN_FILENO, pid) == -1)
+                    {
+                        perror("tcsetpgrp");
+                    }
+                    waitpid(pid, &status, WUNTRACED);
+
+                    // Set the parent to be the foreground process
+                    if (tcsetpgrp(STDIN_FILENO, getpid()) == -1)
+                    {
+                        perror("tcsetpgrp");
+                    }
+
+                    // Check if child was suspended, and if so, add it to the job list
+                    if (WIFSTOPPED(status))
+                    {
+                        if (job_list_add(&jobs, pid, first_token, status) == -1)
+                        {
+                            perror("Could not add to job list\n");
+                        }
+                    }
+                }
             }
-
-            // TODO Task 6: If the last token input by the user is "&", start the current
-            // command in the background.
-            // 1. Determine if the last token is "&". If present, use strvec_take() to remove
-            //    the "&" from the token list.
-            // 2. Modify the code for the parent (shell) process: Don't use tcsetpgrp() or
-            //    use waitpid() to interact with the newly spawned child process.
-            // 3. Add a new entry to the jobs list with the child's pid, program name,
-            //    and status BACKGROUND.
         }
-
         strvec_clear(&tokens);
         printf("%s", PROMPT);
     }
-
     job_list_free(&jobs);
     return 0;
 }
