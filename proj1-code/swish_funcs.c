@@ -97,6 +97,7 @@ int run_command(strvec_t *tokens)
     char *firstToken = strvec_get(tokens, 0);
     if (firstToken == NULL)
     {
+        printf("Could not access first token\n");
         return -1;
     }
     args[0] = firstToken;
@@ -111,6 +112,7 @@ int run_command(strvec_t *tokens)
         file = strvec_get(tokens, opIndex + 1);
         if (file == NULL)
         {
+            printf("Could not access file\n");
             return -1;
         }
         // Open the file
@@ -135,6 +137,7 @@ int run_command(strvec_t *tokens)
         file = strvec_get(tokens, opIndex + 1);
         if (file == NULL)
         {
+            printf("Could not access file\n");
             return -1;
         }
         // Open the file
@@ -160,6 +163,7 @@ int run_command(strvec_t *tokens)
         file = strvec_get(tokens, opIndex + 1);
         if (file == NULL)
         {
+            printf("Could not access file\n");
             return -1;
         }
         // Open the file
@@ -226,6 +230,7 @@ int resume_job(strvec_t *tokens, job_list_t *jobs, int is_foreground)
     char *first_token;
     if ((first_token = strvec_get(tokens, 0)) == NULL)
     {
+        printf("Could not access first token\n");
         return -1;
     }
     char *token;
@@ -233,10 +238,12 @@ int resume_job(strvec_t *tokens, job_list_t *jobs, int is_foreground)
     // Grab the index of the job to be resued and convert it to an integer
     if ((token = strvec_get(tokens, 1)) == NULL)
     {
+        printf("Could not access second token\n");
         return -1;
     }
     if (sscanf(token, "%d", &idx) == -1)
     {
+        printf("Could convert specified index to integer\n");
         return -1;
     }
     int status;
@@ -283,6 +290,7 @@ int resume_job(strvec_t *tokens, job_list_t *jobs, int is_foreground)
         {
             if (job_list_remove(jobs, idx) == -1)
             {
+                printf("Could not remove jobs from job list\n");
                 return -1;
             }
         }
@@ -310,10 +318,12 @@ int await_background_job(strvec_t *tokens, job_list_t *jobs)
     char *second_token;
     if ((second_token = strvec_get(tokens, 1)) == NULL)
     {
+        printf("Could not access second token \n");
         return -1;
     }
     if (sscanf(second_token, "%d", &idx) == -1)
     {
+        printf("Could not convert second token to an integer\n");
         return -1;
     }
     // Grab the speicfied job out of jobs
@@ -336,6 +346,7 @@ int await_background_job(strvec_t *tokens, job_list_t *jobs)
     {
         if (job_list_remove(jobs, idx) == -1)
         {
+            printf("Could not remove job from jobs list\n");
             return -1;
         }
     }
@@ -355,6 +366,7 @@ int await_all_background_jobs(job_list_t *jobs)
     int idx = 0;
     job_t *cur_job;
     int status;
+    // Go through job list
     while ((cur_job = job_list_get(jobs, idx)) != NULL)
     {
         // Check that job status is actually BACKGROUND
