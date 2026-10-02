@@ -199,6 +199,17 @@ int main(int argc, char **argv)
             // To do this, call 'tcsetpgrp(STDIN_FILENO, <child_pid>)', where child_pid is the
             // child's process ID just returned by fork(). Do this in the parent process.
 
+            // TODO Task 5: Handle the issue of foreground/background terminal process groups.
+            // Do this by taking the following steps in the shell (parent) process:
+            // 1. Modify your call to waitpid(): Wait specifically for the child just forked, and
+            //    use WUNTRACED as your third argument to detect if it has stopped from a signal
+            // 2. After waitpid() has returned, call tcsetpgrp(STDIN_FILENO, <pid>) where pid is
+            //    the process ID of the shell process (use getpid() to obtain it)
+            // 3. If the child status was stopped by a signal, add it to 'jobs', the
+            //    the terminal's jobs list.
+            // You can detect if this has occurred using WIFSTOPPED on the status
+            // variable set by waitpid()
+
             // Fork a child process
             pid_t pid = fork();
             int status;
@@ -232,24 +243,15 @@ int main(int argc, char **argv)
                     perror("tcsetpgrp");
                 }
 
+                // Check if child was suspended, and if so, add it to the job list
                 if (WIFSTOPPED(status))
                 {
                     if (job_list_add(&jobs, getpid(), first_token, status) == -1)
                     {
-                        perror("could not add to job list");
+                        perror("Could not add to job list\n");
                     }
                 }
             }
-            // TODO Task 5: Handle the issue of foreground/background terminal process groups.
-            // Do this by taking the following steps in the shell (parent) process:
-            // 1. Modify your call to waitpid(): Wait specifically for the child just forked, and
-            //    use WUNTRACED as your third argument to detect if it has stopped from a signal
-            // 2. After waitpid() has returned, call tcsetpgrp(STDIN_FILENO, <pid>) where pid is
-            //    the process ID of the shell process (use getpid() to obtain it)
-            // 3. If the child status was stopped by a signal, add it to 'jobs', the
-            //    the terminal's jobs list.
-            // You can detect if this has occurred using WIFSTOPPED on the status
-            // variable set by waitpid()
 
             // TODO Task 6: If the last token input by the user is "&", start the current
             // command in the background.

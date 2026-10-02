@@ -215,46 +215,54 @@ int resume_job(strvec_t *tokens, job_list_t *jobs, int is_foreground)
     // 6. Call tcsetpgrp(STDIN_FILENO, <shell_pid>). shell_pid is the *current*
     //    process's pid, since we call this function from the main shell process
 
+    char *token;
     int idx;
-    if ((idx = atoi(strvec_get(tokens, 1))) == 0)
+    // Grab the index of the job to be resued and convert it to an integer
+    if ((token = strvec_get(tokens, 1)) == 0)
+    {
+        return -1;
+    }
+    if (sscanf(token, "%d", &idx) == -1)
     {
         return -1;
     }
     int status;
     int pid;
     job_t *cur_job;
+    // Get the specified job out of jobs
     if ((cur_job = job_list_get(jobs, idx)) == NULL)
     {
+        fprintf(stderr, "Job index out of bounds\n");
         return -1;
     }
-
-    if ((pid = cur_job->pid) == -1)
-    {
-        return -1;
-    }
-
+    pid = cur_job->pid;
+    // Move job's process group into the foreground
     if (tcsetpgrp(STDIN_FILENO, pid) == -1)
     {
-        perror("failed to get jobs pid");
+        perror("tcsetgrp");
         return -1;
     }
-
+    // Send job process the continue signal
     if (kill(pid, SIGCONT) == -1)
     {
-        perror("failed to continue");
+        perror("kill");
         return -1;
     }
 
     waitpid(pid, &status, WUNTRACED);
 
+    // If job was terminated, remove it from the job list
     if (WIFEXITED(status))
     {
-        job_list_remove(jobs, idx);
+        if (job_list_remove(jobs, idx) == -1)
+        {
+            return -1;
+        }
     }
-
+    // Restore shell process to the foreground
     if (tcsetpgrp(STDIN_FILENO, getpid()) == -1)
     {
-        perror("failed to get shell process pid");
+        perror("tcsetgrp");
         return -1;
     }
 
